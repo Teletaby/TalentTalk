@@ -40,7 +40,7 @@ In Vercel deployment settings, add:
 
 That's it. Both frontend and backend are deployed:
 - **Frontend:** `/` (Vite React app)
-- **Backend API:** `/api/*` (Python Flask serverless functions)
+- **Backend API:** `/api/*` (Express.js serverless functions)
 
 ---
 
@@ -50,7 +50,7 @@ That's it. Both frontend and backend are deployed:
 ```
 https://your-app.vercel.app/
 ├── / → React frontend (Vite)
-├── /api/speak → Python Flask (Edge-TTS)
+├── /api/speak → Express.js (Node.js) - Google TTS
 ├── /api/health → Health check
 └── /api/voices → Available voices
 ```
@@ -60,8 +60,10 @@ https://your-app.vercel.app/
 npm start
 ```
 Starts both on:
-- Frontend: http://localhost:5173
-- Backend: http://127.0.0.1:5000
+- Frontend: http://localhost:5173 (Vite)
+- Backend: http://127.0.0.1:5000 (Express.js)
+
+Both start automatically with `concurrently`.
 
 ---
 
@@ -89,10 +91,10 @@ const [ttsProvider, setTtsProvider] = useState<"groq" | "web-speech" | "gtts" | 
 - Verify `VITE_GROQ_API_KEY` is set in Vercel Project Settings
 - Refresh the page
 
-### 403 Error from Edge-TTS
-- This happens when Microsoft's service rejects the connection
-- The app will automatically fallback to Groq TTS
-- Ensure `VITE_GROQ_API_KEY` is valid
+### TTS Generation Fails
+- Check Vercel Function logs for errors
+- Verify `VITE_GROQ_API_KEY` is set if using Groq provider
+- Try switching to "Web Speech API" (browser native, always works)
 
 ### Serverless Function Timeout
 - Vercel has a 60-second timeout for free tier

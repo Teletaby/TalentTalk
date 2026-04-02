@@ -4,17 +4,5 @@
   "installCommand": "npm install",
   "env": {
     "VITE_GROQ_API_KEY": "@vite_groq_api_key"
-  },
-  "functions": {
-    "api/**/*.py": {
-      "runtime": "python3.11",
-      "includeFiles": "backend/requirements.txt"
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.py"
-    }
-  ]
+  }
 }
