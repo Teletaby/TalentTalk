@@ -140,8 +140,13 @@ export async function edgeTtsPlayAudio(
       const edgeVoice = voiceMap[voice] || "en-US-AvaNeural";
       const encodedText = encodeURIComponent(text);
 
-      // Call the local Flask backend
-      const backendUrl = `http://127.0.0.1:5000/speak?text=${encodedText}&voice=${edgeVoice}`;
+      // Determine backend URL - use /api for Vercel, localhost:5000 for local dev
+      const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+      const backendBaseUrl = isProduction 
+        ? `${window.location.origin}/api` 
+        : `http://127.0.0.1:5000`;
+      
+      const backendUrl = `${backendBaseUrl}/speak?text=${encodedText}&voice=${edgeVoice}`;
 
       console.log("Calling Edge-TTS backend at:", backendUrl);
 
