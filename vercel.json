@@ -4,5 +4,15 @@
   "installCommand": "npm install",
   "env": {
     "VITE_GROQ_API_KEY": "@vite_groq_api_key"
+  },
+  "experimentalServices": {
+    "frontend": {
+      "routePrefix": "/",
+      "framework": "vite"
+    },
+    "backend": {
+      "entrypoint": "api",
+      "routePrefix": "/api"
+    }
   }
 }
