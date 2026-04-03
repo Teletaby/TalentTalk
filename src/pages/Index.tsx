@@ -4,20 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SetupStep } from "@/components/SetupStep";
 import { VoiceInterview } from "@/components/VoiceInterview";
-import { TechnicalTest } from "@/components/TechnicalTest";
 import { EvaluationStep } from "@/components/EvaluationStep";
-import type { ChatMessage, TechnicalQuestion } from "@/types/interview";
+import type { ChatMessage } from "@/types/interview";
 
-type Step = "setup" | "interview" | "technical" | "evaluation";
+type Step = "setup" | "interview" | "evaluation";
 
 const Index = () => {
   const [step, setStep] = useState<Step>("setup");
   const [jobDescription, setJobDescription] = useState("");
   const [resumeText, setResumeText] = useState("");
   const [interviewTranscript, setInterviewTranscript] = useState("");
-  const [technicalAnswers, setTechnicalAnswers] = useState<Record<number, string>>({});
   const [selectedVoice, setSelectedVoice] = useState<string>("diana");
-  const [ttsProvider, setTtsProvider] = useState<"groq" | "web-speech" | "gtts" | "edge-tts">("web-speech");
+  const [ttsProvider, setTtsProvider] = useState<"web-speech" | "deepgram">("deepgram");
 
   const handleSetupComplete = (jd: string, resume: string) => {
     setJobDescription(jd);
@@ -27,11 +25,6 @@ const Index = () => {
 
   const handleInterviewComplete = (_messages: ChatMessage[], transcript: string) => {
     setInterviewTranscript(transcript);
-    setStep("technical");
-  };
-
-  const handleTechnicalComplete = (_questions: TechnicalQuestion[], answers: Record<number, string>) => {
-    setTechnicalAnswers(answers);
     setStep("evaluation");
   };
 
@@ -40,33 +33,29 @@ const Index = () => {
     setJobDescription("");
     setResumeText("");
     setInterviewTranscript("");
-    setTechnicalAnswers({});
   };
 
   // Step indicator
   const steps = [
     { key: "setup", label: "Setup" },
     { key: "interview", label: "Interview" },
-    { key: "technical", label: "Technical" },
     { key: "evaluation", label: "Results" },
   ];
   const currentIdx = steps.findIndex((s) => s.key === step);
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 md:p-8">
       {/* Voice & Provider Selector - Top Right */}
       {step === "interview" && (
-        <div className="max-w-2xl mx-auto mb-4 flex justify-end gap-3">
+        <div className="w-full max-w-2xl mx-auto mb-4 flex justify-end gap-3">
           <div className="flex items-center gap-2">
             <label className="text-xs font-medium text-muted-foreground">Provider:</label>
-            <Select value={ttsProvider} onValueChange={(val) => setTtsProvider(val as "groq" | "web-speech" | "gtts" | "edge-tts")}>
+            <Select value={ttsProvider} onValueChange={(val) => setTtsProvider(val as "web-speech" | "deepgram")}>
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="groq">Groq (Top Tier)</SelectItem>
-                <SelectItem value="edge-tts">Edge-TTS (Top Tier)</SelectItem>
-                <SelectItem value="gtts">gTTS (Fair)</SelectItem>
+                <SelectItem value="deepgram">Deepgram (Premium)</SelectItem>
                 <SelectItem value="web-speech">Browser (Free)</SelectItem>
               </SelectContent>
             </Select>
@@ -91,7 +80,7 @@ const Index = () => {
       )}
       
       {/* Step indicator */}
-      <div className="max-w-2xl mx-auto mb-10">
+      <div className="w-full max-w-2xl mx-auto mb-10">
         <div className="flex items-center justify-between">
           {steps.map((s, i) => (
             <div key={s.key} className="flex items-center">
@@ -115,32 +104,28 @@ const Index = () => {
         </div>
       </div>
 
-      {step === "setup" && <SetupStep onStart={handleSetupComplete} />}
-      {step === "interview" && (
-        <VoiceInterview
-          jobDescription={jobDescription}
-          resumeText={resumeText}
-          onComplete={handleInterviewComplete}
-          selectedVoice={selectedVoice}
-          ttsProvider={ttsProvider}
-        />
-      )}
-      {step === "technical" && (
-        <TechnicalTest
-          jobDescription={jobDescription}
-          resumeText={resumeText}
-          onComplete={handleTechnicalComplete}
-        />
-      )}
-      {step === "evaluation" && (
-        <EvaluationStep
-          interviewTranscript={interviewTranscript}
-          technicalAnswers={technicalAnswers}
-          jobDescription={jobDescription}
-          resumeText={resumeText}
-          onRestart={handleRestart}
-        />
-      )}
+      <div className="w-full max-w-2xl">
+        {step === "setup" && <SetupStep onStart={handleSetupComplete} />}
+        {step === "interview" && (
+          <VoiceInterview
+            jobDescription={jobDescription}
+            resumeText={resumeText}
+            onComplete={handleInterviewComplete}
+            selectedVoice={selectedVoice}
+            ttsProvider={ttsProvider}
+          />
+        )}
+        {step === "evaluation" && (
+          <EvaluationStep
+            interviewTranscript={interviewTranscript}
+            technicalAnswers={{}}
+            jobDescription={jobDescription}
+            resumeText={resumeText}
+            onRestart={handleRestart}
+            isAdminView={false}
+          />
+        )}
+      </div>
 
       {/* Admin Link */}
       <div className="fixed bottom-4 right-4">

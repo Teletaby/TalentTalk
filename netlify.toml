@@ -8,7 +8,7 @@
 [env]
   [env.production]
     [env.production.context]
-      environment = { VITE_GROQ_API_KEY = "", DEEPGRAM_API_KEY = "" }
+      environment = { VITE_GROQ_API_KEY = "", DEEPGRAM_API_KEY = "06bd4eef302685cc168000965fef50ac50778db1" }
 
 # Allow VITE_GROQ_API_KEY and DEEPGRAM_API_KEY in builds
 [context.production.environment]

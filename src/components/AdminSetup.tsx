@@ -70,7 +70,7 @@ export function AdminSetup({ onStart }: AdminSetupProps) {
           Create Test Interview
         </h1>
         <p className="text-muted-foreground text-lg">
-          Set up an interview scenario. Job description required, resume optional.
+          Set up an interview scenario by uploading a job description. Resume is optional.
         </p>
       </div>
 
@@ -125,7 +125,7 @@ export function AdminSetup({ onStart }: AdminSetupProps) {
         <p className="text-sm font-medium text-foreground">Interview will include:</p>
         <ul className="text-xs text-muted-foreground space-y-1">
           <li>• Voice conversation with Sarah Mitchell (Senior Recruiter)</li>
-          <li>• Questions about candidate experience (if resume provided)</li>
+          <li>• Questions tailored to the job description</li>
           <li>• 5 job-specific technical assessment questions</li>
           <li>• Hands-on exercise tasks for the role</li>
           <li>• Final evaluation and score</li>

@@ -60,75 +60,88 @@ export function SetupStep({ onStart }: SetupStepProps) {
   const canStart = jobDescription.trim().length > 20 && resumeText.trim().length > 20;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
-          <Briefcase className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium text-primary">JSquared Recruitment</span>
+    <div className="w-full">
+      <div className="max-w-2xl mx-auto">
+        {/* Teams Header */}
+        <div className="teams-header mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+              <span className="text-white text-sm font-bold">T</span>
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">Interview Preparation</h1>
+              <p className="text-sm text-gray-500">JSquared Recruitment</p>
+            </div>
+          </div>
         </div>
-        <h1 className="text-4xl font-bold font-heading tracking-tight">
-          AI Interview Practice
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          Practice with our Senior Talent Acquisition AI. Get real feedback.
-        </p>
+
+        <div className="text-center space-y-4 mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
+            AI Interview Practice
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Practice with our Senior Talent Acquisition AI. Get real feedback.
+          </p>
+        </div>
+
+        <div className="space-y-6">
+          <div className="teams-card p-6">
+            <label className="block">
+              <span className="text-sm font-medium text-gray-900 mb-3 block">Job Description</span>
+              <Textarea
+                placeholder="Paste the full job description here..."
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                className="min-h-[150px] bg-white border-gray-300 focus:border-blue-500 resize-none"
+              />
+            </label>
+          </div>
+
+          <div className="teams-card p-6">
+            <span className="text-sm font-medium text-gray-900 block mb-4">Your Resume</span>
+            
+            <label className="flex flex-col items-center gap-3 p-8 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 transition-colors bg-gray-50 hover:bg-gray-100">
+              {isParsing ? (
+                <>
+                  <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+                  <span className="text-sm text-gray-600">Parsing PDF...</span>
+                </>
+              ) : fileName ? (
+                <>
+                  <FileText className="w-10 h-10 text-blue-600" />
+                  <span className="text-sm text-gray-900">{fileName}</span>
+                  <span className="text-xs text-gray-500">Click to replace</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-10 h-10 text-gray-400" />
+                  <span className="text-sm text-gray-600">Upload resume (.txt, .pdf)</span>
+                </>
+              )}
+              <input type="file" className="hidden" accept=".txt,.pdf,.doc,.docx" onChange={handleFileUpload} />
+            </label>
+
+            {!fileName && (
+              <div className="text-center text-xs text-gray-500 mt-2">or paste below</div>
+            )}
+            <Textarea
+              placeholder="Or paste your resume text here..."
+              value={resumeText}
+              onChange={(e) => setResumeText(e.target.value)}
+              className="min-h-[120px] bg-white border-gray-300 focus:border-blue-500 resize-none mt-4"
+            />
+          </div>
+
+          <Button
+            onClick={() => onStart(jobDescription, resumeText)}
+            disabled={!canStart}
+            size="lg"
+            className="w-full text-lg py-6 font-semibold teams-button-primary"
+          >
+            Start Interview <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
+        </div>
       </div>
-
-      <div className="glass-card p-6 space-y-4">
-        <label className="block">
-          <span className="text-sm font-medium text-foreground mb-2 block">Job Description</span>
-          <Textarea
-            placeholder="Paste the full job description here..."
-            value={jobDescription}
-            onChange={(e) => setJobDescription(e.target.value)}
-            className="min-h-[150px] bg-background/50 border-border/50 focus:border-primary resize-none"
-          />
-        </label>
-      </div>
-
-      <div className="glass-card p-6 space-y-4">
-        <span className="text-sm font-medium text-foreground block">Your Resume</span>
-        
-        <label className="flex flex-col items-center gap-3 p-8 border-2 border-dashed border-border/50 rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
-          {isParsing ? (
-            <>
-              <Loader2 className="w-10 h-10 text-primary animate-spin" />
-              <span className="text-sm text-muted-foreground">Parsing PDF...</span>
-            </>
-          ) : fileName ? (
-            <>
-              <FileText className="w-10 h-10 text-primary" />
-              <span className="text-sm text-foreground">{fileName}</span>
-              <span className="text-xs text-muted-foreground">Click to replace</span>
-            </>
-          ) : (
-            <>
-              <Upload className="w-10 h-10 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Upload resume (.txt, .pdf)</span>
-            </>
-          )}
-          <input type="file" className="hidden" accept=".txt,.pdf,.doc,.docx" onChange={handleFileUpload} />
-        </label>
-
-        {!fileName && (
-          <div className="text-center text-xs text-muted-foreground">or paste below</div>
-        )}
-        <Textarea
-          placeholder="Or paste your resume text here..."
-          value={resumeText}
-          onChange={(e) => setResumeText(e.target.value)}
-          className="min-h-[120px] bg-background/50 border-border/50 focus:border-primary resize-none"
-        />
-      </div>
-
-      <Button
-        onClick={() => onStart(jobDescription, resumeText)}
-        disabled={!canStart}
-        size="lg"
-        className="w-full text-lg py-6 font-heading font-semibold"
-      >
-        Start Interview <ArrowRight className="w-5 h-5 ml-2" />
-      </Button>
     </div>
   );
 }

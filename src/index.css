@@ -6,53 +6,53 @@
 
 @layer base {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 93%;
+    --background: 210 40% 98%;
+    --foreground: 210 20% 10%;
 
-    --card: 222 40% 10%;
-    --card-foreground: 210 40% 93%;
+    --card: 210 20% 98%;
+    --card-foreground: 210 20% 10%;
 
-    --popover: 222 40% 10%;
-    --popover-foreground: 210 40% 93%;
+    --popover: 210 20% 98%;
+    --popover-foreground: 210 20% 10%;
 
-    --primary: 173 58% 39%;
-    --primary-foreground: 222 47% 6%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 222 30% 16%;
-    --secondary-foreground: 210 40% 85%;
+    --secondary: 210 15% 92%;
+    --secondary-foreground: 210 20% 15%;
 
-    --muted: 222 25% 14%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 210 10% 88%;
+    --muted-foreground: 210 10% 45%;
 
-    --accent: 173 58% 39%;
-    --accent-foreground: 222 47% 6%;
+    --accent: 199 89% 48%;
+    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 222 25% 18%;
-    --input: 222 25% 18%;
-    --ring: 173 58% 39%;
+    --border: 210 15% 85%;
+    --input: 210 15% 92%;
+    --ring: 199 89% 48%;
 
-    --radius: 0.75rem;
+    --radius: 0.375rem;
 
-    --sidebar-background: 222 40% 8%;
-    --sidebar-foreground: 210 40% 85%;
-    --sidebar-primary: 173 58% 39%;
-    --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 222 30% 16%;
-    --sidebar-accent-foreground: 210 40% 85%;
-    --sidebar-border: 222 25% 18%;
-    --sidebar-ring: 173 58% 39%;
+    --sidebar-background: 210 20% 96%;
+    --sidebar-foreground: 210 20% 15%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 210 15% 92%;
+    --sidebar-accent-foreground: 210 20% 15%;
+    --sidebar-border: 210 15% 85%;
+    --sidebar-ring: 199 89% 48%;
 
     /* Custom tokens */
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
-    --surface: 222 35% 12%;
-    --surface-foreground: 210 40% 90%;
-    --glow-primary: 173 58% 39%;
+    --surface: 210 20% 95%;
+    --surface-foreground: 210 20% 10%;
+    --glow-primary: 199 89% 48%;
 
     font-family: 'DM Sans', sans-serif;
   }
@@ -72,7 +72,19 @@
 
 @layer utilities {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl;
+    @apply bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg shadow-sm;
+  }
+  .teams-card {
+    @apply bg-white border border-gray-200 rounded-lg shadow-sm;
+  }
+  .teams-header {
+    @apply bg-white border-b border-gray-200 px-4 py-3;
+  }
+  .teams-button {
+    @apply bg-white hover:bg-gray-50 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors;
+  }
+  .teams-button-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white rounded-md px-3 py-2 text-sm font-medium transition-colors;
   }
   .glow-border {
     box-shadow: 0 0 20px -5px hsl(var(--glow-primary) / 0.3);

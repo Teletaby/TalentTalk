@@ -121,19 +121,29 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         {/* Step Navigation - Clickable */}
         <div className="border-t bg-muted/30 px-4 py-3">
           <div className="max-w-7xl mx-auto flex justify-center gap-2">
-            {steps.map((s, idx) => (
-              <Button
-                key={s.key}
-                onClick={() => setStep(s.key as Step)}
-                variant={step === s.key ? "default" : "outline"}
-                className={`flex flex-col items-center w-24 h-20 ${
-                  step === s.key ? "ring-2 ring-primary" : ""
-                }`}
-              >
-                <span className="text-lg font-bold">{s.number}</span>
-                <span className="text-xs">{s.label}</span>
-              </Button>
-            ))}
+            {steps.map((s, idx) => {
+              // For admin panel, allow more flexible navigation
+              const isAccessible = 
+                s.key === "setup" || 
+                s.key === "interview" || // Allow interview even without setup for testing
+                s.key === "technical" || // Allow technical even without interview for testing
+                (s.key === "evaluation" && (jobDescription || resumeText || interviewTranscript || Object.keys(technicalAnswers).length > 0));
+
+              return (
+                <Button
+                  key={s.key}
+                  onClick={() => setStep(s.key as Step)}
+                  disabled={false} // Allow all steps for admin testing
+                  variant={step === s.key ? "default" : "outline"}
+                  className={`flex flex-col items-center w-24 h-20 ${
+                    step === s.key ? "ring-2 ring-primary" : ""
+                  } ${!isAccessible ? "opacity-50" : ""}`}
+                >
+                  <span className="text-lg font-bold">{s.number}</span>
+                  <span className="text-xs">{s.label}</span>
+                </Button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -261,6 +271,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                 jobDescription={jobDescription}
                 resumeText={resumeText}
                 onRestart={handleRestart}
+                isAdminView={true}
               />
             )}
           </>

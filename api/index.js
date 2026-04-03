@@ -1,11 +1,11 @@
 import express from 'express';
 import gTTS from 'gtts';
-import { createClient } from '@deepgram/sdk';
+import { DeepgramClient } from '@deepgram/sdk';
 import { Readable } from 'stream';
 
 const app = express();
 
-const deepgram = createClient('06bd4eef302685cc168000965fef50ac50778db1');
+const deepgram = new DeepgramClient({ apiKey: '06bd4eef302685cc168000965fef50ac50778db1' });
 
 // Enable CORS
 app.use((req, res, next) => {
@@ -29,6 +29,7 @@ const voiceMap = {
   austin: { lang: 'en', name: 'Austin' },
   daniel: { lang: 'en', name: 'Daniel' },
   troy: { lang: 'en', name: 'Troy' },
+  'aura-asteria-en': { provider: 'deepgram' },
   'aura-2-amalthea-en': { provider: 'deepgram' },
 };
 

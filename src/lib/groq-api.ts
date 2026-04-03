@@ -211,37 +211,85 @@ export async function speechToText(audioBlob: Blob): Promise<string> {
   }
 }
 
-export async function generateTechnicalQuestions(jobDescription: string, resumeText: string) {
+export async function testGroqConnection(): Promise<boolean> {
+  try {
+    const groqApiKey = import.meta.env.VITE_GROQ_API_KEY;
+    if (!groqApiKey) {
+      console.error("❌ GROQ_API_KEY not configured");
+      return false;
+    }
+
+    console.log("🧪 Testing Groq API connection...");
+    
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${groqApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "user", content: "Say 'Hello World' in exactly 2 words." },
+        ],
+        temperature: 0.1,
+        max_tokens: 10,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("❌ Groq test failed:", response.status, await response.text());
+      return false;
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    console.log("✅ Groq test successful:", content);
+    return true;
+  } catch (e) {
+    console.error("❌ Groq test error:", e);
+    return false;
+  }
+}
+
+export async function generateTechnicalQuestions(jobDescription: string, resumeText: string = "") {
   try {
     const groqApiKey = import.meta.env.VITE_GROQ_API_KEY;
     if (!groqApiKey) {
       throw new Error("GROQ_API_KEY not configured in .env");
     }
 
-    const systemPrompt = `You are a technical interviewer at JSquared Recruitment. Based on the job description and resume, generate exactly 5 technical assessment questions appropriate for the role.
+    console.log("📋 Job description length:", jobDescription?.length);
+    console.log("📄 Resume length:", resumeText?.length);
+    console.log("📋 Job description preview:", jobDescription?.substring(0, 200) + "...");
+    console.log("📄 Resume preview:", resumeText?.substring(0, 200) + "...");
 
-Return your response as valid JSON:
+    const hasResume = resumeText?.trim().length > 0;
+    
+    const systemPrompt = `You are an expert interviewer conducting assessments for various roles.
+
+Analyze the job description${hasResume ? " and resume" : ""} provided, then generate exactly 5 assessment questions specifically tailored to this position${hasResume ? " and candidate" : ""}.
+
+QUESTION TYPES:
+- "multiple_choice": Knowledge testing with exactly 4 options
+- "short_answer": Analysis or experience questions (options: null)
+- "code": Coding problems for tech roles (options: null)  
+- "exercise": Case studies or scenarios (options: null, include instructions)
+
+DIFFICULTY: "easy", "medium", or "hard"
+
+Return ONLY valid JSON:
 {
   "questions": [
     {
-      "id": number,
-      "question": string,
-      "type": "multiple_choice" | "code" | "short_answer" | "exercise",
-      "options": string[] | null (only for multiple_choice),
-      "instructions": string (for exercise type, provide detailed project/task instructions),
-      "difficulty": "easy" | "medium" | "hard"
+      "id": 1,
+      "question": "Specific question about the job requirements",
+      "type": "multiple_choice",
+      "options": ["A", "B", "C", "D"],
+      "difficulty": "medium"
     }
   ]
-}
-
-MIXED QUESTION TYPES:
-- At least 1-2 hands-on exercises (type: "exercise") that are realistic project tasks they'd do in the role
-- At least 1 coding question if technical role
-- Multiple choice and short answer questions
-- ALL questions MUST be specific to job requirements and their background
-
-For exercises: Provide clear, concise project instructions they can complete (e.g., "Built a feature like...", "Debug this scenario...", "Design a system for...").
-Exercises should take 5-10 minutes thinking/writing time.`;
+}`;
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -253,36 +301,94 @@ Exercises should take 5-10 minutes thinking/writing time.`;
         model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `JOB DESCRIPTION:\n${jobDescription}\n\nRESUME:\n${resumeText}\n\nGenerate 5 technical questions.` },
+          { role: "user", content: `JOB DESCRIPTION:\n${jobDescription}${hasResume ? `\n\nRESUME:\n${resumeText}\n\nBased on the above job description and resume, generate 5 assessment questions specifically tailored to this position and candidate. Focus on the key requirements and skills mentioned in the job description, and consider the candidate's background from their resume.` : "\n\nNote: No candidate resume was provided. Generate 5 assessment questions based on the job description and typical requirements for this type of role."}` },
         ],
         temperature: 0.5,
         max_tokens: 2048,
-        response_format: { type: "json_object" },
       }),
     });
 
+    console.log("🔍 API response status:", response.status);
+    console.log("🔍 API response headers:", Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
       const errText = await response.text();
-      console.error("Groq technical error:", response.status, errText);
+      console.error("❌ Groq technical error:", response.status, errText);
       throw new Error(`Technical question generation failed: ${response.status}`);
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
+    
+    console.log("✅ API response received");
+    console.log("📝 Raw content:", content);
 
     let questions;
     try {
-      questions = JSON.parse(content);
-    } catch {
-      console.error("Failed to parse technical questions JSON:", content);
-      questions = { questions: [] };
+      // Try to parse the content as JSON
+      let jsonContent = content.trim();
+      
+      // Remove markdown code blocks if present
+      if (jsonContent.startsWith('```json')) {
+        jsonContent = jsonContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (jsonContent.startsWith('```')) {
+        jsonContent = jsonContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      // Try to find JSON in the content
+      const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonContent = jsonMatch[0];
+      }
+      
+      questions = JSON.parse(jsonContent);
+      
+      // Validate the structure
+      if (!questions || typeof questions !== 'object') {
+        throw new Error("Response is not a valid object");
+      }
+      
+      // If questions is directly an array, wrap it
+      if (Array.isArray(questions)) {
+        questions = { questions };
+      }
+      
+      // If questions.questions doesn't exist, try to find it
+      if (!questions.questions && questions.questions !== undefined) {
+        // Look for any array property that might contain questions
+        const arrayKeys = Object.keys(questions).filter(key => Array.isArray(questions[key]));
+        if (arrayKeys.length > 0) {
+          questions.questions = questions[arrayKeys[0]];
+        }
+      }
+      
+      console.log("✅ Parsed questions successfully:", questions);
+      console.log("📊 Questions array length:", questions.questions?.length);
+    } catch (parseError) {
+      console.error("❌ Failed to parse technical questions JSON");
+      console.error("❌ Parse error:", parseError);
+      console.error("❌ Raw content that failed to parse:", content);
+      throw new Error("Could not parse AI response. Please ensure the API is working correctly.");
     }
 
-    return questions.questions || [];
+    if (!questions || !Array.isArray(questions.questions)) {
+      console.error("❌ Invalid questions structure:", questions);
+      console.error("❌ Questions type:", typeof questions);
+      console.error("❌ Has questions property:", 'questions' in questions);
+      console.error("❌ Questions property type:", typeof questions.questions);
+      console.error("❌ Is questions an array:", Array.isArray(questions.questions));
+      throw new Error("The AI service returned an invalid questions format. Please try again.");
+    }
+
+    if (!questions.questions || questions.questions.length === 0) {
+      throw new Error("No valid questions were generated by the AI service.");
+    }
+
+    return questions.questions;
   } catch (e) {
     const errorMsg = e instanceof Error ? e.message : String(e);
     console.error("Technical questions error:", errorMsg);
-    throw new Error(`Failed to generate technical questions: ${errorMsg}`);
+    throw e;
   }
 }
 
