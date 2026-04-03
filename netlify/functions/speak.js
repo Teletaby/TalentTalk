@@ -60,9 +60,9 @@ export const handler = async (event, context) => {
       method: 'POST',
       headers: {
         'Authorization': `Token ${apiKey}`,
-        'Content-Type': 'text/plain',
+        'Content-Type': 'application/json',
       },
-      body: text,
+      body: JSON.stringify({ text: text }),
     });
 
     if (!response.ok) {
