@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Volume2, Loader2, ArrowRight } from "lucide-react";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import { sendChatMessage, textToSpeech, speechToText } from "@/lib/groq-api";
-import { webSpeechTTS, stopWebSpeech, gttsPlayAudio, edgeTtsPlayAudio } from "@/lib/tts-provider";
+import { webSpeechTTS, stopWebSpeech, deepgramPlayAudio } from "@/lib/tts-provider";
 import type { ChatMessage } from "@/types/interview";
 
 interface VoiceInterviewProps {
@@ -11,7 +11,7 @@ interface VoiceInterviewProps {
   resumeText: string;
   onComplete: (messages: ChatMessage[], transcript: string) => void;
   selectedVoice?: string;
-  ttsProvider?: "groq" | "web-speech" | "gtts" | "edge-tts";
+  ttsProvider?: "web-speech" | "deepgram";
 }
 
 export function VoiceInterview({
@@ -19,7 +19,7 @@ export function VoiceInterview({
   resumeText,
   onComplete,
   selectedVoice = "diana",
-  ttsProvider = "groq",
+  ttsProvider = "deepgram",
 }: VoiceInterviewProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isThinking, setIsThinking] = useState(false);
@@ -48,63 +48,13 @@ export function VoiceInterview({
             throw new Error(result.error || "Web Speech API failed");
           }
           setIsSpeaking(false);
-        } else if (ttsProvider === "gtts") {
-          // Use gTTS (Google Text-to-Speech)
-          const result = await gttsPlayAudio(text);
-          if (!result.played) {
-            throw new Error(result.error || "gTTS failed");
-          }
-          setIsSpeaking(false);
-        } else if (ttsProvider === "edge-tts") {
-          // Use Edge-TTS (Microsoft Azure Neural)
-          const result = await edgeTtsPlayAudio(text, selectedVoice);
-          if (!result.played) {
-            throw new Error(result.error || "Edge-TTS failed");
-          }
-          setIsSpeaking(false);
         } else {
-          // Use Groq API (default)
-          const blob = await textToSpeech(text, selectedVoice);
-          console.log("Audio blob received:", blob.size, "bytes");
-
-          if (!blob.size) {
-            throw new Error("Empty audio response from TTS service");
+          // Use Deepgram API (default)
+          const result = await deepgramPlayAudio(text, selectedVoice);
+          if (!result.played) {
+            throw new Error(result.error || "Deepgram TTS failed");
           }
-
-          const url = URL.createObjectURL(blob);
-          const audio = new Audio(url);
-          audioRef.current = audio;
-
-          audio.onerror = (e) => {
-            console.error("Audio playback error:", e);
-            setAudioError(
-              `Audio playback failed: ${audio.error?.message || "Unknown error"}`
-            );
-            setIsSpeaking(false);
-            URL.revokeObjectURL(url);
-          };
-
-          audio.onended = () => {
-            console.log("Audio playback completed");
-            setIsSpeaking(false);
-            URL.revokeObjectURL(url);
-          };
-
-          console.log("Starting audio playback...");
-          const playPromise = audio.play();
-
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => console.log("Audio playback started successfully"))
-              .catch((err) => {
-                console.error("Audio play promise rejected:", err);
-                setAudioError(
-                  `Autoplay blocked or playback failed: ${err.message}`
-                );
-                setIsSpeaking(false);
-                URL.revokeObjectURL(url);
-              });
-          }
+          setIsSpeaking(false);
         }
       } catch (e) {
         const errorMsg = e instanceof Error ? e.message : "Unknown error";

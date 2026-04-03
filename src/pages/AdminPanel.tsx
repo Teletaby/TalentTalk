@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,12 +22,19 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   const [interviewTranscript, setInterviewTranscript] = useState("");
   const [technicalAnswers, setTechnicalAnswers] = useState<Record<number, string>>({});
   const [showSettings, setShowSettings] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState<Record<string, Record<string, string>>>({});
   const [selectedVoice, setSelectedVoice] = useState<string>(() => {
     return localStorage.getItem("adminSelectedVoice") || "diana";
   });
-  const [ttsProvider, setTtsProvider] = useState<"groq" | "web-speech" | "gtts" | "edge-tts">(() => {
-    return (localStorage.getItem("adminTtsProvider") as "groq" | "web-speech" | "gtts" | "edge-tts") || "groq";
+  const [ttsProvider, setTtsProvider] = useState<"web-speech" | "deepgram">(() => {
+    return (localStorage.getItem("adminTtsProvider") as "web-speech" | "deepgram") || "deepgram";
   });
+
+  useEffect(() => {
+    fetch("/api/voices")
+      .then((res) => res.json())
+      .then(setAvailableVoices);
+  }, []);
 
   const handleSetupComplete = (jd: string, resume: string) => {
     setJobDescription(jd);
@@ -58,9 +65,23 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     localStorage.setItem("adminSelectedVoice", voice);
   };
 
-  const handleTtsProviderChange = (provider: "groq" | "web-speech" | "gtts" | "edge-tts") => {
+  const handleTtsProviderChange = (provider: "web-speech" | "deepgram") => {
     setTtsProvider(provider);
     localStorage.setItem("adminTtsProvider", provider);
+
+    // Set a default voice for the new provider
+    if (provider === 'deepgram') {
+      const deepgramVoices = Object.keys(availableVoices.Deepgram || {});
+      const newVoice = 'aura-2-amalthea-en';
+      if (deepgramVoices.includes(newVoice)) {
+        setSelectedVoice(newVoice);
+        localStorage.setItem("adminSelectedVoice", newVoice);
+      } else if (deepgramVoices.length > 0) {
+        setSelectedVoice(deepgramVoices[0]);
+        localStorage.setItem("adminSelectedVoice", deepgramVoices[0]);
+      }
+    }
+    // Add other provider defaults if necessary
   };
 
   const steps = [
@@ -156,17 +177,26 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                   🎙️ Interview Voice
                 </h3>
                 <div className="space-y-2">
-                  <Select value={selectedVoice} onValueChange={handleVoiceChange}>
+                  <Select
+                    value={selectedVoice}
+                    onValueChange={handleVoiceChange}
+                    disabled={!availableVoices[ttsProvider]}
+                  >
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue placeholder="Select a voice" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="diana">Diana (Female - Professional)</SelectItem>
-                      <SelectItem value="autumn">Autumn (Female - Warm)</SelectItem>
-                      <SelectItem value="hannah">Hannah (Female - Friendly)</SelectItem>
-                      <SelectItem value="austin">Austin (Male - Professional)</SelectItem>
-                      <SelectItem value="daniel">Daniel (Male - Calm)</SelectItem>
-                      <SelectItem value="troy">Troy (Male - Energetic)</SelectItem>
+                      {availableVoices[ttsProvider] ? (
+                        Object.entries(availableVoices[ttsProvider]).map(([id, name]) => (
+                          <SelectItem key={id} value={id}>
+                            {name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-voice" disabled>
+                          No voices available for this provider
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
@@ -178,24 +208,18 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
               <Card className="p-4 bg-secondary/50">
                 <h3 className="font-semibold mb-3">🔊 TTS Provider</h3>
                 <div className="space-y-2">
-                  <Select value={ttsProvider} onValueChange={(val) => handleTtsProviderChange(val as "groq" | "web-speech" | "gtts" | "edge-tts")}>
+                  <Select value={ttsProvider} onValueChange={(val) => handleTtsProviderChange(val as "web-speech" | "deepgram")}>
                     <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="groq">Groq (Top Tier - Neural AI)</SelectItem>
-                      <SelectItem value="edge-tts">Edge-TTS (Top Tier - Microsoft Azure)</SelectItem>
-                      <SelectItem value="gtts">gTTS (Fair Quality - Google)</SelectItem>
+                      <SelectItem value="deepgram">Deepgram (Top Tier - Neural AI)</SelectItem>
                       <SelectItem value="web-speech">Web Speech API (Browser Native - Free)</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    {ttsProvider === "groq"
+                    {ttsProvider === "deepgram"
                       ? "Premium neural voices with emotional nuance"
-                      : ttsProvider === "edge-tts"
-                      ? "Microsoft's high-quality Azure Neural voices"
-                      : ttsProvider === "gtts"
-                      ? "Clear but 'robotic-smooth' Google voices"
                       : "Free device voices, no internet required"}
                   </p>
                 </div>

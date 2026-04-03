@@ -13,14 +13,14 @@ export const handler = async (event, context) => {
 
   const voices = {
     Female: {
-      diana: 'en-US-Diana',
-      autumn: 'en-US-Autumn',
-      hannah: 'en-US-Hannah',
+      diana: 'aura-2-amalthea-en',
+      autumn: 'aura-2-amber-en',
+      hannah: 'aura-2-aria-en',
     },
     Male: {
-      austin: 'en-US-Austin',
-      daniel: 'en-US-Daniel',
-      troy: 'en-US-Troy',
+      austin: 'aura-2-austin-en',
+      daniel: 'aura-2-daniel-en',
+      troy: 'aura-2-troy-en',
     },
   };
 

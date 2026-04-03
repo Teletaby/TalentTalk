@@ -1,6 +1,6 @@
 // TTS Provider abstraction - supports multiple text-to-speech backends
 
-export type TTSProvider = "groq" | "web-speech" | "gtts" | "edge-tts";
+export type TTSProvider = "web-speech" | "deepgram";
 
 /**
  * Web Speech API - Browser native TTS
@@ -77,16 +77,19 @@ export async function webSpeechTTS(
 }
 
 /**
- * gTTS (Google Text-to-Speech) - Via public API
- * Clear quality, "robotic-smooth", no auth required
- * Rate limited but sufficient for moderate use
+ * Deepgram TTS - Premium voice quality via Deepgram API
+ * Natural-sounding voices with multiple speaker options
+ * Requires DEEPGRAM_API_KEY environment variable
  */
-export async function gttsPlayAudio(text: string): Promise<{ played: boolean; error?: string }> {
+export async function gttsPlayAudio(
+  text: string,
+  voice: string = 'diana',
+  provider: 'gtts' | 'deepgram' = 'gtts'
+): Promise<{ played: boolean; error?: string }> {
   return new Promise((resolve) => {
     try {
-      // Using a public gTTS proxy (gtts-api.pythonanywhere.com)
       const encodedText = encodeURIComponent(text);
-      const url = `https://gtts-api.pythonanywhere.com/speech?text=${encodedText}&lang=en`;
+      const url = `/api/speak?text=${encodedText}&voice=${voice}`;
 
       const audio = new Audio(url);
       
@@ -97,7 +100,7 @@ export async function gttsPlayAudio(text: string): Promise<{ played: boolean; er
       audio.onerror = () => {
         resolve({
           played: false,
-          error: "Failed to load gTTS audio",
+          error: "Failed to load audio from TTS service",
         });
       };
 
@@ -110,7 +113,7 @@ export async function gttsPlayAudio(text: string): Promise<{ played: boolean; er
     } catch (error) {
       resolve({
         played: false,
-        error: error instanceof Error ? error.message : "gTTS failed",
+        error: error instanceof Error ? error.message : "TTS generation failed",
       });
     }
   });
@@ -231,4 +234,15 @@ export function stopWebSpeech() {
   if ("speechSynthesis" in window) {
     window.speechSynthesis.cancel();
   }
+}
+
+/**
+ * Deepgram TTS - Via backend API
+ * Uses the deployed backend at /api/speak endpoint
+ */
+export async function deepgramPlayAudio(
+  text: string,
+  voice: string = 'diana'
+): Promise<{ played: boolean; error?: string }> {
+  return gttsPlayAudio(text, voice, 'deepgram');
 }

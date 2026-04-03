@@ -1,8 +1,11 @@
 import express from 'express';
 import gTTS from 'gtts';
+import { createClient } from '@deepgram/sdk';
 import { Readable } from 'stream';
 
 const app = express();
+
+const deepgram = createClient('06bd4eef302685cc168000965fef50ac50778db1');
 
 // Enable CORS
 app.use((req, res, next) => {
@@ -26,6 +29,7 @@ const voiceMap = {
   austin: { lang: 'en', name: 'Austin' },
   daniel: { lang: 'en', name: 'Daniel' },
   troy: { lang: 'en', name: 'Troy' },
+  'aura-2-amalthea-en': { provider: 'deepgram' },
 };
 
 // Generate speech using gTTS
@@ -44,6 +48,24 @@ app.get('/api/speak', async (req, res) => {
     }
 
     console.log(`Generating speech for text: ${text.substring(0, 50)}... with voice: ${voice}`);
+
+    const voiceOption = voiceMap[voice];
+    if (voiceOption && voiceOption.provider === 'deepgram') {
+      const { result, error } = await deepgram.speak.request(
+        { text },
+        { model: voice }
+      );
+
+      if (error) {
+        console.error('Deepgram error:', error);
+        return res.status(500).json({ error: 'Deepgram TTS generation failed' });
+      }
+
+      const stream = result.getStream();
+      res.setHeader('Content-Type', 'audio/mpeg');
+      stream.pipe(res);
+      return;
+    }
 
     // Create gTTS instance
     const gtts = new gTTS({
@@ -83,6 +105,10 @@ app.get('/api/voices', (req, res) => {
       daniel: 'en-US-Daniel',
       troy: 'en-US-Troy',
     },
+    Deepgram: {
+      'aura-asteria-en': 'aura-asteria-en',
+      'aura-2-amalthea-en': 'aura-2-amalthea-en',
+    }
   };
   res.json(voices);
 });

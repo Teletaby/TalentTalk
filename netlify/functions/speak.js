@@ -1,12 +1,11 @@
-import gTTS from 'gtts';
-
+// Deepgram voice model mapping
 const voiceMap = {
-  diana: { lang: 'en', name: 'Diana' },
-  autumn: { lang: 'en', name: 'Autumn' },
-  hannah: { lang: 'en', name: 'Hannah' },
-  austin: { lang: 'en', name: 'Austin' },
-  daniel: { lang: 'en', name: 'Daniel' },
-  troy: { lang: 'en', name: 'Troy' },
+  diana: 'aura-2-amalthea-en',    // Female - professional
+  autumn: 'aura-2-amber-en',      // Female - warm
+  hannah: 'aura-2-aria-en',       // Female - friendly
+  austin: 'aura-2-austin-en',     // Male - professional
+  daniel: 'aura-2-daniel-en',     // Male - calm
+  troy: 'aura-2-troy-en',         // Male - energetic
 };
 
 export const handler = async (event, context) => {
@@ -17,12 +16,21 @@ export const handler = async (event, context) => {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     };
   }
 
   try {
+    const apiKey = process.env.DEEPGRAM_API_KEY;
+    if (!apiKey) {
+      return {
+        statusCode: 500,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ error: 'Deepgram API key not configured' }),
+      };
+    }
+
     const queryParams = event.queryStringParameters || {};
     const text = queryParams.text || 'Hello world';
     const voice = queryParams.voice || 'diana';
@@ -44,41 +52,43 @@ export const handler = async (event, context) => {
       };
     }
 
-    console.log(`Generating speech for text: ${text.substring(0, 50)}... with voice: ${voice}`);
+    const deepgramModel = voiceMap[voice] || voiceMap.diana;
+    console.log(`Generating Deepgram speech with model: ${deepgramModel}`);
 
-    // Create gTTS instance
-    const gtts = new gTTS({
-      text: text,
-      lang: 'en',
-      slow: false,
-      host: 'https://translate.google.com',
+    // Call Deepgram API
+    const response = await fetch('https://api.deepgram.com/v1/speak?model=' + deepgramModel + '&speed=1', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${apiKey}`,
+        'Content-Type': 'text/plain',
+      },
+      body: text,
     });
 
-    // Convert stream to buffer
-    const chunks = [];
-    
-    return new Promise((resolve, reject) => {
-      gtts.stream()
-        .on('data', chunk => chunks.push(chunk))
-        .on('end', () => {
-          const buffer = Buffer.concat(chunks);
-          const base64Audio = buffer.toString('base64');
-          
-          resolve({
-            statusCode: 200,
-            headers: {
-              'Content-Type': 'audio/mpeg',
-              'Cache-Control': 'public, max-age=3600',
-              'Access-Control-Allow-Origin': '*',
-            },
-            body: base64Audio,
-            isBase64Encoded: true,
-          });
-        })
-        .on('error', err => {
-          reject(err);
-        });
-    });
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error(`Deepgram API error (${response.status}):`, errorData);
+      return {
+        statusCode: response.status,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ error: `Deepgram API error: ${response.statusText}` }),
+      };
+    }
+
+    // Convert response to buffer
+    const buffer = await response.arrayBuffer();
+    const base64Audio = Buffer.from(buffer).toString('base64');
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'audio/mpeg',
+        'Cache-Control': 'public, max-age=3600',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: base64Audio,
+      isBase64Encoded: true,
+    };
   } catch (error) {
     console.error('Error in /speak:', error);
     return {

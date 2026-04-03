@@ -1,6 +1,6 @@
 // Local development server for the API
 import http from 'http';
-import app from './api/index.js';
+import app from './index.js';
 
 const PORT = process.env.PORT || 5000;
 

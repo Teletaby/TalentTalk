@@ -8,11 +8,11 @@
 [env]
   [env.production]
     [env.production.context]
-      environment = { VITE_GROQ_API_KEY = "" }
+      environment = { VITE_GROQ_API_KEY = "", DEEPGRAM_API_KEY = "" }
 
-# Allow VITE_GROQ_API_KEY in builds (frontend needs it)
+# Allow VITE_GROQ_API_KEY and DEEPGRAM_API_KEY in builds
 [context.production.environment]
-  SECRETS_SCAN_OMIT_KEYS = "VITE_GROQ_API_KEY"
+  SECRETS_SCAN_OMIT_KEYS = "VITE_GROQ_API_KEY,DEEPGRAM_API_KEY"
 
 # Redirect all API calls to netlify functions
 [[redirects]]
