@@ -1,46 +1,55 @@
 # TalentTalk Deployment Guide
 
-## Vercel Solo Deployment (Easiest)
+## Netlify Deployment (Recommended)
 
-Both frontend and backend run on **Vercel** with zero external dependencies.
+Both frontend and backend run on **Netlify** with zero external dependencies.
 
-### Step 1: Deploy to Vercel
+### Step 1: Deploy to Netlify
 
-1. **Go to Vercel:**
-   - https://vercel.com
-   - Sign in with GitHub
-
-2. **Add New Project:**
-   - Click "Add New Project"
-   - Search for and select `Teletaby/TalentTalk`
+1. **Via Netlify Dashboard:**
+   - Go to https://app.netlify.com
+   - Click "Add new site" → "Import an existing project"
+   - Select GitHub and authorize Netlify
+   - Choose `Teletaby/TalentTalk` repository
    - Select `main` branch
 
-3. **Configure Project:**
-   - **Framework:** Vite
-   - **Root Directory:** `./` (default)
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
-   - **Install Command:** `npm install`
+2. **Or via Netlify CLI:**
+   ```bash
+   npm install -g netlify-cli
+   netlify login
+   netlify init
+   ```
 
-### Step 2: Add Environment Variables
+### Step 2: Automatic Configuration
 
-In Vercel deployment settings, add:
+Netlify automatically detects the `netlify.toml` configuration which includes:
+- **Build Command:** `npm run build`
+- **Functions Directory:** `netlify/functions`
+- **Publish Directory:** `dist`
+- **API Routes:** Rewritten to serverless functions at `/.netlify/functions/*`
+
+### Step 3: Add Environment Variables
+
+In Netlify site settings (Site settings → Build & deploy → Environment), add:
 
 | Key | Value |
 |-----|-------|
 | `VITE_GROQ_API_KEY` | Your Groq API key from https://console.groq.com |
 
-### Step 3: Deploy
+Click "Save" and trigger a new deploy.
 
-- Click **"Deploy"**
-- Wait ~3-5 minutes for build to complete
-- Your app is now live at `https://<your-vercel-url>.vercel.app`
+### Step 4: Deploy
 
-### Step 4: Done! ✅
+- If using the dashboard: Click **"Deploy site"**
+- If using CLI: Run `netlify deploy --prod`
+- Wait ~2-3 minutes for build to complete
+- Your app is now live at `https://<your-netlify-site>.netlify.app`
 
-That's it. Both frontend and backend are deployed:
+### Step 5: Done! ✅
+
+Both frontend and backend are deployed:
 - **Frontend:** `/` (Vite React app)
-- **Backend API:** `/api/*` (Express.js serverless functions)
+- **Backend API:** `/api/*` (Netlify serverless functions)
 
 ---
 
@@ -48,12 +57,17 @@ That's it. Both frontend and backend are deployed:
 
 **Architecture:**
 ```
-https://your-app.vercel.app/
+https://your-site.netlify.app/
 ├── / → React frontend (Vite)
-├── /api/speak → Express.js (Node.js) - Google TTS
-├── /api/health → Health check
-└── /api/voices → Available voices
+├── /api/speak → Netlify Function - Google TTS
+├── /api/health → Netlify Function - Health check
+└── /api/voices → Netlify Function - Available voices
 ```
+
+**Netlify Functions:**
+- `/api/speak` - Converts text to speech using Google TTS (gTTS)
+- `/api/health` - Returns server health status
+- `/api/voices` - Lists available voices for TTS
 
 **Local Development:**
 ```bash
@@ -81,18 +95,26 @@ To change the default TTS provider, modify `src/pages/Index.tsx`:
 ```typescript
 const [ttsProvider, setTtsProvider] = useState<"groq" | "web-speech" | "gtts" | "edge-tts">("web-speech");
 ```
-
----
-
-## Troubleshooting
-
-### "Edge-TTS backend unavailable"
-- Check if Vercel deployment succeeded
-- Verify `VITE_GROQ_API_KEY` is set in Vercel Project Settings
-- Refresh the page
+Deployment fails with "npm install" errors
+- Ensure `package.json` includes all dependencies
+- Check Netlify build logs: Site settings → Deploys → Click failed deploy
+- Try clearing the cache: Site settings → Deploys → "Clear cache and retry"
 
 ### TTS Generation Fails
-- Check Vercel Function logs for errors
+- Check Netlify Function logs: Functions tab in Netlify dashboard
+- Verify `VITE_GROQ_API_KEY` is set in environment variables if using Groq provider
+- Try switching to "Web Speech API" (browser native, always works)
+
+### API Routes Not Working
+- Verify the `netlify.toml` file exists and is properly formatted
+- Check that Netlify functions are deployed: Deploys → Functions tab
+- Netlify Functions have a 10-second timeout on free tier, 26 seconds on Pro
+- Monitor function execution time in Netlify Analytics
+
+### Build Fails
+- Check the build logs for dependency issues
+- Ensure `netlify/functions` directory exists with `.js` files
+- Run `npm run build` locally to verify the build works
 - Verify `VITE_GROQ_API_KEY` is set if using Groq provider
 - Try switching to "Web Speech API" (browser native, always works)
 

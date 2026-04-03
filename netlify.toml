@@ -1,0 +1,23 @@
+# Netlify Configuration for TalentTalk
+
+[build]
+  command = "npm run build"
+  functions = "netlify/functions"
+  publish = "dist"
+
+[env]
+  [env.production]
+    [env.production.context]
+      environment = { VITE_GROQ_API_KEY = "" }
+
+# Redirect all API calls to netlify functions
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# SPA (Single Page App) rewrite rule
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
